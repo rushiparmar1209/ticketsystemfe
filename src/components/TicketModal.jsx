@@ -1,34 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const TicketModal = ({ isOpen, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
-    category: '',
     task: '',
     description: '',
     assignedTo: '',
     status: '',
   });
+  const [employees, setEmployees] = useState([]);
+  const [statuses, setStatuses] = useState([]);
+  const [message, setMessage] = useState('');  // State for success/error message
+
+  useEffect(() => {
+    if (isOpen) {
+      // Fetch employees
+      fetch('http://localhost:8080/employees')
+        .then((response) => response.json())
+        .then((data) => setEmployees(data))
+        .catch((error) => console.error('Error fetching employees:', error));
+
+      // Fetch statuses
+      fetch('http://localhost:8080/statuses')
+        .then((response) => response.json())
+        .then((data) => setStatuses(data))
+        .catch((error) => console.error('Error fetching statuses:', error));
+    }
+  }, [isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Pass the new ticket data to the parent component
-    onSubmit(formData);
+    const payload = {
+      title: formData.task,  // 'task' is being sent as 'title' in payload
+      description: formData.description,
+      assigned_to: parseInt(formData.assignedTo, 10),  // Converting employee id to integer
+      status_id: parseInt(formData.status, 10),  // Converting status id to integer
+    };
 
-    // Reset the form and close the modal
+    // Call the onSubmit prop passed from the parent component (App.js)
+    onSubmit(payload);  // This will call handleAddTicket from App.js
+    
+    // Reset form after submission
     setFormData({
-      category: '',
       task: '',
       description: '',
       assignedTo: '',
       status: '',
     });
-    onClose();
+
+    setMessage('Ticket created successfully!');
+    setTimeout(() => {
+      onClose(); // Close modal after success
+      setMessage('');
+    }, 2000);
   };
 
   if (!isOpen) return null;
@@ -68,9 +97,11 @@ const TicketModal = ({ isOpen, onClose, onSubmit }) => {
               className="w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
             >
               <option value="">Select Employee</option>
-              <option value="John">Rushi Parmar</option>
-              <option value="Jane">Satish Dilware</option>
-              <option value="Smith">Abhishek Shah</option>
+              {employees.map((employee) => (
+                <option key={employee.id} value={employee.id}>
+                  {employee.name}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -82,14 +113,22 @@ const TicketModal = ({ isOpen, onClose, onSubmit }) => {
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
             >
-              <option value="Open">To Do</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Code Review">Code Review</option>
-              <option value="Done">Done</option>
-              <option value="Deployed">Deployed</option>
-              <option value="Compiled">Compiled</option>
+              <option value="">Select Status</option>
+              {statuses.map((status) => (
+                <option key={status.id} value={status.id}>
+                  {status.name}
+                </option>
+              ))}
             </select>
           </div>
+
+          {message && (
+            <div className="text-center mt-4">
+              <p className={`text-lg font-semibold ${message.includes('Error') ? 'text-red-600' : 'text-green-600'}`}>
+                {message}
+              </p>
+            </div>
+          )}
 
           <div className="flex justify-end space-x-4 mt-4">
             <button
