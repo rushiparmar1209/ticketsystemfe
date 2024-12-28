@@ -5,7 +5,7 @@ import UpdateTicketModal from "./components/UpdateTicketModal";
 import axios from "axios";
 
 function App() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false); // Create New Ticket modal
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [tickets, setTickets] = useState([]);
   const [selectedTicket, setSelectedTicket] = useState(null);
@@ -93,16 +93,21 @@ function App() {
         const employeesData = employeesResponse.data;
         const statusesData = statusesResponse.data;
   
-        // Find employee and status names based on the IDs
-        const assignedEmployee = employeesData.find(emp => emp.id === ticketData.assigned_to);
-        const status = statusesData.find(status => status.id === ticketData.status_id);
-  
-        // Update ticket details with names
+        // Find assigned employee name and status name based on IDs
+        const assignedToName = employeesData.find(
+          (employee) => employee.id === ticketData.assigned_to
+        )?.name;
+
+        const statusName = statusesData.find(
+          (status) => status.id === ticketData.status_id
+        )?.name;
+
         setTicketDetails({
           ...ticketData,
-          assigned_to_name: assignedEmployee ? assignedEmployee.name : 'Unknown Employee',
-          status_name: status ? status.name : 'Unknown Status',
+          assigned_to_name: assignedToName || "N/A",
+          status_name: statusName || "N/A",
         });
+        setIsModalOpen(false); // Close the create new ticket modal
       }
     } catch (error) {
       console.error("Error fetching ticket details:", error);
@@ -199,10 +204,10 @@ function App() {
             <strong>Description:</strong> {ticketDetails.description}
           </p>
           <p className="text-sm text-gray-700">
-            <strong>Assigned To:</strong> {ticketDetails.assigned_to}
+            <strong>Assigned To:</strong> {ticketDetails.assigned_to_name}
           </p>
           <p className="text-sm text-gray-700">
-            <strong>Status:</strong> {ticketDetails.status_id}
+            <strong>Status:</strong> {ticketDetails.status_name}
           </p>
           <button
             onClick={closeTicketDetails}
