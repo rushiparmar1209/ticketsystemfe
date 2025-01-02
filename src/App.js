@@ -3,6 +3,8 @@ import "./App.css";
 import TicketModal from "./components/TicketModal";
 import UpdateTicketModal from "./components/UpdateTicketModal";
 import TicketList from "./components/TicketList";
+import SearchPanel from "./components/SearchPanel";
+import FilterPanel from "./components/FilterPanel";
 import axios from "axios";
 
 function App() {
@@ -12,6 +14,9 @@ function App() {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [ticketDetails, setTicketDetails] = useState(null);
   const [ticketCount, setTicketCount] = useState(0); // Ticket count
+
+  const [isSearchPanelVisible, setIsSearchPanelVisible] = useState(false);
+  const [isFilterPanelVisible, setIsFilterPanelVisible] = useState(false);
 
   // Fetch all tickets
   const handleGetTickets = async () => {
@@ -81,6 +86,16 @@ function App() {
     }
   };
 
+  const handleSearch = (selectedOptions) => {
+    // Implement search logic here using selectedOptions
+    console.log("Searching with:", selectedOptions);
+  };
+
+  const handleFilter = ({ selectedOptions, dateRange }) => {
+    // Implement filter logic here using selectedOptions and dateRange
+    console.log("Filtering with:", selectedOptions, dateRange);
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100 relative">
       {/* Created Tickets Section */}
@@ -94,6 +109,33 @@ function App() {
           setIsUpdateModalOpen(true);
         }}
       />
+
+      {/* Show SearchPanel and FilterPanel only after clicking "View All Tickets" */}
+      {tickets.length > 0 && (
+        <>
+          <div className="mt-6">
+            <button
+              onClick={() => setIsSearchPanelVisible((prev) => !prev)}
+              className="bg-blue-600 text-white px-6 py-2 rounded-xl mb-4"
+            >
+              {isSearchPanelVisible ? "Hide Search" : "Search Tickets"}
+            </button>
+
+            {isSearchPanelVisible && <SearchPanel onSearch={handleSearch} />}
+          </div>
+
+          <div className="mt-6">
+            <button
+              onClick={() => setIsFilterPanelVisible((prev) => !prev)}
+              className="bg-green-600 text-white px-6 py-2 rounded-xl mb-4"
+            >
+              {isFilterPanelVisible ? "Hide Filter" : "Filter Tickets"}
+            </button>
+
+            {isFilterPanelVisible && <FilterPanel onFilter={handleFilter} />}
+          </div>
+        </>
+      )}
 
       {/* Modals */}
       <TicketModal
