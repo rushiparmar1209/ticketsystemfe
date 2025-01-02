@@ -6,10 +6,19 @@ const UpdateTicketModal = ({ isOpen, onClose, ticket, onSubmit }) => {
     description: "",
     assignedTo: "",
     status: "",
+    priority: "",
+    type: "",
+    estimatedTime: "",
+    expectedStartDate: "",
+    expectedEndDate: "",
+    attachFiles: {
+      files: [],
+      screenshots: [],
+    },
   });
   const [employees, setEmployees] = useState([]);
   const [statuses, setStatuses] = useState([]);
-  const [message, setMessage] = useState("");  // State for success/error message
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     if (isOpen) {
@@ -27,10 +36,16 @@ const UpdateTicketModal = ({ isOpen, onClose, ticket, onSubmit }) => {
 
       // Pre-fill the form with the current ticket's data
       setFormData({
-        task: ticket.title,
-        description: ticket.description,
-        assignedTo: ticket.assigned_to,
-        status: ticket.status_id,
+        task: ticket.title || "",
+        description: ticket.description || "",
+        assignedTo: ticket.assigned_to || "",
+        status: ticket.status_id || "",
+        priority: ticket.priority || "",
+        type: ticket.type || "",
+        estimatedTime: ticket.estimated_time || "",
+        expectedStartDate: ticket.expected_start_date || "",
+        expectedEndDate: ticket.expected_end_date || "",
+        attachFiles: ticket.attachments || { files: [], screenshots: [] },
       });
     }
   }, [isOpen, ticket]);
@@ -40,14 +55,36 @@ const UpdateTicketModal = ({ isOpen, onClose, ticket, onSubmit }) => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleFileUpload = (e, type) => {
+    const uploadedFiles = Array.from(e.target.files);
+    setFormData((prevState) => ({
+      ...prevState,
+      attachFiles: {
+        ...prevState.attachFiles,
+        [type]: [...prevState.attachFiles[type], ...uploadedFiles],
+      },
+    }));
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (!formData.assignedTo || !formData.status || !formData.priority || !formData.type) {
+      setMessage("Please fill in all fields!");
+      return;
+    }
 
     const updatedTicket = {
       title: formData.task,
       description: formData.description,
       assigned_to: parseInt(formData.assignedTo, 10),
       status_id: parseInt(formData.status, 10),
+      priority: formData.priority,
+      type: formData.type,
+      estimated_time: formData.estimatedTime,
+      expected_start_date: formData.expectedStartDate,
+      expected_end_date: formData.expectedEndDate,
+      attachments: formData.attachFiles,
     };
 
     // Call the onSubmit function passed from parent component
@@ -59,6 +96,12 @@ const UpdateTicketModal = ({ isOpen, onClose, ticket, onSubmit }) => {
       description: "",
       assignedTo: "",
       status: "",
+      priority: "",
+      type: "",
+      estimatedTime: "",
+      expectedStartDate: "",
+      expectedEndDate: "",
+      attachFiles: { files: [], screenshots: [] },
     });
     setMessage("Ticket updated successfully!");
     setTimeout(() => {
@@ -71,9 +114,9 @@ const UpdateTicketModal = ({ isOpen, onClose, ticket, onSubmit }) => {
 
   return (
     <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-xl shadow-lg w-96 max-w-md">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">Update Ticket</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg w-80 md:w-96 max-w-md max-h-[90vh] overflow-y-auto"style={{ fontSize: "0.875rem" }}>
+        <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-4">Update Ticket</h2>
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Task</label>
             <input
@@ -81,7 +124,7 @@ const UpdateTicketModal = ({ isOpen, onClose, ticket, onSubmit }) => {
               name="task"
               value={formData.task}
               onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+              className="w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm"
             />
           </div>
 
@@ -91,8 +134,8 @@ const UpdateTicketModal = ({ isOpen, onClose, ticket, onSubmit }) => {
               name="description"
               value={formData.description}
               onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-              rows="4"
+              className="w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm"
+              rows="3"
             ></textarea>
           </div>
 
@@ -102,7 +145,7 @@ const UpdateTicketModal = ({ isOpen, onClose, ticket, onSubmit }) => {
               name="assignedTo"
               value={formData.assignedTo}
               onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+              className="w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm"
             >
               <option value="">Select Employee</option>
               {employees.map((employee) => (
@@ -119,7 +162,7 @@ const UpdateTicketModal = ({ isOpen, onClose, ticket, onSubmit }) => {
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+              className="w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm"
             >
               <option value="">Select Status</option>
               {statuses.map((status) => (
@@ -130,26 +173,109 @@ const UpdateTicketModal = ({ isOpen, onClose, ticket, onSubmit }) => {
             </select>
           </div>
 
-          <div className="flex justify-between items-center mt-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+            <select
+              name="priority"
+              value={formData.priority}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm"
+            >
+              <option value="">Select Priority</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+            <select
+              name="type"
+              value={formData.type}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm"
+            >
+              <option value="">Select Type</option>
+              <option value="Bug">Bug</option>
+              <option value="Feature">Feature</option>
+              <option value="Task">Task</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Time</label>
+            <input
+              type="text"
+              name="estimatedTime"
+              value={formData.estimatedTime}
+              onChange={handleChange}
+              placeholder="Enter estimated time (e.g., 5 hours)"
+              className="w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Expected Start Date</label>
+            <input
+              type="date"
+              name="expectedStartDate"
+              value={formData.expectedStartDate}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Expected End Date</label>
+            <input
+              type="date"
+              name="expectedEndDate"
+              value={formData.expectedEndDate}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm"
+            />
+          </div>
+
+          <div>
+            <h3 className="block text-sm font-medium text-gray-700 mb-1">Attach Files or Screenshot</h3>
+            <input
+              type="file"
+              multiple
+              onChange={(e) => handleFileUpload(e, "files")}
+              className="w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm"
+            />
+            <input
+              type="file"
+              multiple
+              onChange={(e) => handleFileUpload(e, "screenshots")}
+              className="w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm"
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <button
+              type="submit"
+              className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-yellow-600 focus:outline-none"
+            >
+              Update
+            </button>
             <button
               type="button"
               onClick={onClose}
-              className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600"
+              className="bg-gray-300 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-400 focus:outline-none"
             >
-              Close
-            </button>
-            <button
-              type="submit"
-              className="bg-yellow-600 text-white px-6 py-2 rounded-lg hover:bg-yellow-700"
-            >
-              Update Ticket
+              Cancel
             </button>
           </div>
         </form>
 
-        {/* Success/Error Message */}
         {message && (
-          <div className="mt-4 text-green-500 text-center font-medium">{message}</div>
+          <div
+            className={`mt-4 p-2 text-center text-white rounded-md ${message === "Ticket updated successfully!" ? "bg-green-500" : "bg-red-500"}`}
+          >
+            {message}
+          </div>
         )}
       </div>
     </div>
