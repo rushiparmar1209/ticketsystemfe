@@ -1,22 +1,61 @@
 import React, { useState } from "react";
 import "./App.css";
+import AllTicketsWindow from "./components/AllTicketsWindow";
 import TicketModal from "./components/TicketModal";
 import UpdateTicketModal from "./components/UpdateTicketModal";
 import TicketList from "./components/TicketList";
 import SearchPanel from "./components/SearchPanel";
 import FilterPanel from "./components/FilterPanel";
+import ParentComponent from "./components/ParentComponent";
+// import AllTicketsWindow from './components/AllTicketsWindow';
+import Sidebar from "./components/Sidebar"; // Adjust path if necessary
+import Dashboard from "./components/Dashboard"; // Adjust path if necessary
+
 import axios from "axios";
 
 function App() {
+  const [selectedFilters, setSelectedFilters] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+  const [isFilterActive, setIsFilterActive] = useState(false);
+  const [isSearchActive, setIsSearchActive] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false); // Create New Ticket modal
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [tickets, setTickets] = useState([]); // State for tickets
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [ticketDetails, setTicketDetails] = useState(null);
   const [ticketCount, setTicketCount] = useState(0); // Ticket count
-
   const [isSearchPanelVisible, setIsSearchPanelVisible] = useState(false);
   const [isFilterPanelVisible, setIsFilterPanelVisible] = useState(false);
+
+  const onFilter = (selectedOptions) => {
+    // Filter logic
+    console.log("Filtering tickets with: ", selectedOptions);
+    setIsFilterActive(true);
+    // Example: Apply filter logic
+    setSearchResults([]); // Replace with actual filter results
+  };
+
+  const onSearch = (selectedOptions) => {
+    // Search logic
+    console.log("Searching tickets with: ", selectedOptions);
+    setIsSearchActive(true);
+    // Example: Apply search logic
+    setSearchResults([]); // Replace with actual search results
+  };
+
+  // Fetch ticket details
+  const handleGetTicketDetails = async (ticketId) => {
+    try {
+      const response = await axios.get(`http://localhost:8080/tickets/${ticketId}`);
+      if (response.status === 200) {
+        setTicketDetails(response.data); // Save ticket details in state
+        alert("Ticket details fetched successfully!");
+      }
+    } catch (error) {
+      console.error("Error fetching ticket details:", error);
+      alert("Failed to fetch ticket details.");
+    }
+  };
 
   // Fetch all tickets
   const handleGetTickets = async () => {
@@ -86,16 +125,6 @@ function App() {
     }
   };
 
-  const handleSearch = (selectedOptions) => {
-    // Implement search logic here using selectedOptions
-    console.log("Searching with:", selectedOptions);
-  };
-
-  const handleFilter = ({ selectedOptions, dateRange }) => {
-    // Implement filter logic here using selectedOptions and dateRange
-    console.log("Filtering with:", selectedOptions, dateRange);
-  };
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100 relative">
       {/* Created Tickets Section */}
@@ -109,40 +138,35 @@ function App() {
           setIsUpdateModalOpen(true);
         }}
       />
+      
+      <div className="absolute bottom-16 right-36 transform -translate-x-1/2 flex space-x-4">
+        <button className="bg-blue-500 text-white py-2 px-4 rounded-lg shadow-md hover:bg-blue-600 transition-colors duration-300" onClick={() => setIsFilterPanelVisible(prev => !prev)}>Filter Tickets</button>
+        <button className="bg-teal-500 text-white py-2 px-4 rounded-lg shadow-md hover:bg-teal-600 transition-colors duration-300" onClick={() => setIsSearchPanelVisible(prev => !prev)}>Search Tickets</button>
+      </div>
 
-      {/* Show SearchPanel and FilterPanel only after clicking "View All Tickets" */}
+      {isSearchPanelVisible && <SearchPanel onSearch={onSearch} />}
+      {isFilterPanelVisible && <FilterPanel onFilter={onFilter} />}
+
+      {/* Ticket List and Actions */}
       {tickets.length > 0 && (
-        <>
-          <div className="mt-6">
-            <button
-              onClick={() => setIsSearchPanelVisible((prev) => !prev)}
-              className="bg-blue-600 text-white px-6 py-2 rounded-xl mb-4"
-            >
-              {isSearchPanelVisible ? "Hide Search" : "Search Tickets"}
-            </button>
-
-            {isSearchPanelVisible && <SearchPanel onSearch={handleSearch} />}
-          </div>
-
-          <div className="mt-6">
-            <button
-              onClick={() => setIsFilterPanelVisible((prev) => !prev)}
-              className="bg-green-600 text-white px-6 py-2 rounded-xl mb-4"
-            >
-              {isFilterPanelVisible ? "Hide Filter" : "Filter Tickets"}
-            </button>
-
-            {isFilterPanelVisible && <FilterPanel onFilter={handleFilter} />}
-          </div>
-        </>
+        <div className="mt-6">
+          {/* Ticket List */}
+          <TicketList
+            tickets={tickets}
+            ticketCount={ticketCount}
+            onGetTicketDetails={(ticket) => setSelectedTicket(ticket)}
+            onDeleteTicket={handleDeleteTicket}
+            onEditTicket={(ticket) => {
+              setSelectedTicket(ticket);
+              setIsUpdateModalOpen(true);
+            }}
+          />
+        </div>
       )}
 
+<div className="absolute bottom-16 left-80 transform -translate-x-1/2 flex space-x-4">
       {/* Modals */}
-      <TicketModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleAddTicket}
-      />
+      <TicketModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleAddTicket} />
       {selectedTicket && (
         <UpdateTicketModal
           isOpen={isUpdateModalOpen}
@@ -153,18 +177,9 @@ function App() {
       )}
 
       {/* Buttons */}
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-xl hover:bg-blue-700 transition-all duration-300 mt-12"
-      >
-        Create New Ticket
-      </button>
-      <button
-        onClick={handleGetTickets}
-        className="bg-green-600 text-white px-6 py-3 rounded-xl shadow-xl hover:bg-green-700 transition-all duration-300 mt-4"
-      >
-        View All Tickets
-      </button>
+      <button onClick={() => setIsModalOpen(true)} className="bg-green-500 text-white py-2 px-4 rounded-lg shadow-md hover:bg-green-600 transition-colors duration-300">Create New Ticket</button>
+      <button onClick={handleGetTickets} className="bg-purple-500 text-white py-2 px-4 rounded-lg shadow-md hover:bg-purple-600 transition-colors duration-300">View All Tickets</button>
+    </div>
     </div>
   );
 }
